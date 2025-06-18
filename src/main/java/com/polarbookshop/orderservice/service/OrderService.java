@@ -1,6 +1,8 @@
 package com.polarbookshop.orderservice.service;
 
 
+import com.polarbookshop.orderservice.book.Book;
+import com.polarbookshop.orderservice.book.BookClient;
 import com.polarbookshop.orderservice.domain.Order;
 import com.polarbookshop.orderservice.domain.OrderRepository;
 import com.polarbookshop.orderservice.domain.OrderStatus;
@@ -14,6 +16,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final BookClient bookClient;
 
 
     public Flux<Order> getAllOrders() {
@@ -22,7 +25,11 @@ public class OrderService {
     }
 
     public Mono<Order> submitOrder(String isbn, int quantity) {
-        return Mono.just(buildRejectedOrder(isbn, quantity))
+        return bookClient.getBookByIsbn(isbn)
+                .map(book -> buildAcceptedOrder(book, quantity))
+                .defaultIfEmpty(
+                        buildRejectedOrder(isbn, quantity)
+                )
                 .flatMap(orderRepository::save)
                 .map(Order::of);
     }
@@ -31,5 +38,14 @@ public class OrderService {
         return OrderEntity.of(isbn, null, null, quantity, OrderStatus.REJECTED);
     }
 
+    public static OrderEntity buildAcceptedOrder(Book book, int quantity) {
+        return OrderEntity.of(
+                book.isbn(),
+                book.title() + " - " + book.author(),
+                book.price(),
+                quantity,
+                OrderStatus.ACCEPTED
+        );
+    }
 
 }
