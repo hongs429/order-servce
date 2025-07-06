@@ -3,7 +3,7 @@ on: push # 새 코드를 저장소로 푸시하면 워크플로를 시작하는 
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: hongs429/catalog-service
+  IMAGE_NAME: hongs429/order-service
   VERSION: lastest
 
 jobs:
